@@ -74,8 +74,10 @@ def objectToPoint(hand_image, depth_image):
         pt0 = (y_masked - cam_cx) * pt2 / cam_fx
         pt1 = (x_masked - cam_cy) * pt2 / cam_fy
         cloud = np.concatenate((pt0, pt1, pt2), axis=1).astype(np.float32)
-        cloud = cloud.reshape(-1, 3)
-    # cloud = cloud[~(cloud==0).all(1)]
+        # cloud = cloud.reshape(-1, 3)
+    cloud = np.array(cloud)
+    if cloud.ndim == 2:
+        cloud = cloud[~(cloud==0).all(1)]
     # print("cloud type is",type(cloud))
     # pcd = o3d.geometry.PointCloud()
     # pcd.points = o3d.utility.Vector3dVector(cloud)
@@ -83,15 +85,16 @@ def objectToPoint(hand_image, depth_image):
     # cloud = cloud/1000
     # print(mask_list)
     # cv.waitKey(0)
-    cloud = np.array(cloud)
+    
     return cloud
 
 
-def talker(points):
+
+def talker(points, rate=30):
 
     pub = rospy.Publisher('object_topic', PointCloud2, queue_size=5)
     rospy.init_node('object_pointcloud_publisher_node', anonymous=True)
-    rate = rospy.Rate(30)
+    rate = rospy.Rate(rate)
     points = points / 1000
 
     # while not rospy.is_shutdown():
@@ -121,12 +124,35 @@ def talker(points):
     print("published...")
     rate.sleep()
 
-def pointlesser(points):
-    lesspoints = points[0: -1: 10]
+def pointlesser(points,rate=30):
+    lesspoints = points[0: -1: rate]
 
     return lesspoints
 
+def radius_outlier(cloudpoint,nb_points = 10,radius = 0.2):
 
+    cloud = o3d.geometry.PointCloud()
+    cloud.points = o3d.utility.Vector3dVector(cloudpoint)
+    #点云数据构造kd树
+    pcd_tree = o3d.geometry.KDTreeFlann(cloud)
+    #寻找每个点的邻近nb_points个数的点，并且计算他们之间的距离，如果距离大于radius，则舍弃该点，小于则保留
+    di = []
+    new_cloud = []
+    for i in range(np.array(cloud.points).shape[0]):#遍历所有点
+        [k,idx,_] = pcd_tree.search_knn_vector_3d(cloud.points[i],nb_points)
+        #计算该点到每个点的欧式距离
+        euc_distance = [ np.linalg.norm(np.array(cloud.points)[j] - np.array(cloud.points)[idx[0]])for j in np.array(idx)[1:]]
+        is_less_than_radius = [j for j in euc_distance if j > radius ]
+        if len(is_less_than_radius) == 0 :#所有距离都符合
+            new_cloud.append(np.array(cloud.points)[i])
+    new_cloud = np.array(new_cloud).reshape(-1,3)
+    # new_pcd = o3d.geometry.PointCloud()
+    # points = o3d.utility.Vector3dVector(np.array(new_cloud))
+    # new_pcd.points = points
+    # o3d.io.write_point_cloud('radius_deal_points.pcd',new_pcd,True)
+    # o3d.visualization.draw_geometries([new_pcd])
+
+    return new_cloud
 
 def transform(points):
 

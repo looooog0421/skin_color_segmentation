@@ -1,5 +1,6 @@
 import skinSegAlg
 import object2point
+import point2ellipsoid
 import pyrealsense2 as rs
 import numpy as np
 import cv2
@@ -22,12 +23,8 @@ depth_scale = depth_sensor.get_depth_scale()
 # print("scale:", depth_scale)
 # 深度比例系数为： 0.0010000000474974513
 
-#肤色识别颜色参数
-ecl_x = 113
-ecl_y = 156
-leng_x = 24
-leng_y = 23
-ang = 43
+Ellipsis = point2ellipsoid.EllipsoidTool()
+
 
 while True:
     frames = pipeline.wait_for_frames() #获取摄像头的实时帧
@@ -40,8 +37,18 @@ while True:
 
     cloud = object2point.objectToPoint(hand_image, depth_image)
     cloud = np.array(cloud)
-    # cloud = object2point.pointlesser(cloud)
-    object2point.talker(cloud)        
+    cloud = object2point.pointlesser(cloud, rate=50)
+    
+    print(cloud.shape)
+    if cloud.shape[0] > 20:
+        cloud = object2point.radius_outlier(cloud, 5, 5)
+        if cloud.shape[0] > 1:
+            center1, radii1, rotation1 = Ellipsis.getMinVolEllipse(cloud)
+            print("center1=",center1,"radii=", radii1,"rotation=", rotation1)
+            ellipsoid = Ellipsis.getEllipsoidPoint(center1, radii1 ,rotation1)
+            object2point.talker(ellipsoid)      
+
+    # object2point.talker(cloud)  
 
     cv2.namedWindow(winname='RealSense',flags=cv2.WINDOW_AUTOSIZE) #设置视窗,flag为表示是否自动设置或调整窗口大小,WINDOW_AUTOSIZE即为自适应
     cv2.imshow('RealSense', images)

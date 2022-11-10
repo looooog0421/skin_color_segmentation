@@ -59,6 +59,13 @@ def brightenShadows(img, amount):
 
 
 def hand_YCbCr_ellipse(frames):
+    #肤色识别颜色参数
+    ecl_x = 113
+    ecl_y = 156
+    leng_x = 24
+    leng_y = 23
+    ang = 43
+
     skinCrCbHist = np.zeros((256, 256), dtype=np.uint8)
     cv2.ellipse(skinCrCbHist, (ecl_x,ecl_y), (leng_x,leng_y), ang, 0.0, 360.0, (255,255,255), -1)
     framesYCrCb = cv2.cvtColor(frames, cv2.COLOR_BGR2YCrCb)
@@ -70,15 +77,15 @@ def hand_YCbCr_ellipse(frames):
     
     
     
-    dst = cv2.bitwise_and(frames,frames, mask=skin)
+    skin = cv2.bitwise_and(frames,frames, mask=skin)
     element =cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
-    dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, element)
+    skin = cv2.morphologyEx(skin, cv2.MORPH_OPEN, element)
 
     # cv2.namedWindow("dst", cv2.WINDOW_NORMAL)
     # cv2.imshow("dst", output)
     # cv2.waitKey(0)
 
-    return dst
+    return skin
 
 
 if __name__ == "__main__":
@@ -117,10 +124,10 @@ if __name__ == "__main__":
         images = np.hstack((color_image, hand_image, depth_colormap))
 
     
-        cloud = object2point.objectToPoint(hand_image, depth_image)
-        cloud = np.array(cloud)
-        # cloud = object2point.pointlesser(cloud)
-        object2point.talker(cloud)        
+        # cloud = object2point.objectToPoint(hand_image, depth_image)
+        # cloud = np.array(cloud)
+        # # cloud = object2point.pointlesser(cloud)
+        # object2point.talker(cloud)        
 
         cv2.namedWindow(winname='RealSense',flags=cv2.WINDOW_AUTOSIZE) #设置视窗,flag为表示是否自动设置或调整窗口大小,WINDOW_AUTOSIZE即为自适应
         cv2.imshow('RealSense', images)
