@@ -57,25 +57,19 @@ def brightenShadows(img, amount):
     img[:, :, 2] += val_inc
     return img
 
+
 def hand_YCbCr_ellipse(frames):
     skinCrCbHist = np.zeros((256, 256), dtype=np.uint8)
     cv2.ellipse(skinCrCbHist, (ecl_x,ecl_y), (leng_x,leng_y), ang, 0.0, 360.0, (255,255,255), -1)
     framesYCrCb = cv2.cvtColor(frames, cv2.COLOR_BGR2YCrCb)
-    (y, cr, cb) = cv2.split(framesYCrCb)
-    skin = np.zeros(cr.shape, dtype=np.uint8)
-    (x, y) = cr.shape
-
-    CR_CR = np.array(framesYCrCb[:, :, 1:3]).reshape(-1,2)
+    (y, Cr, Cb) = cv2.split(framesYCrCb)
+    (x, y) = framesYCrCb.shape[0:2]
+    skin = np.zeros((x,y), dtype=np.uint8)
+    skin = skinCrCbHist[Cr,Cb]
+    # print(skin.shape)
     
-
-
-
-    # for i in range(x):
-    #     for j in range(y):
-    #         CR = framesYCrCb[i, j, 1]
-    #         CB = framesYCrCb[i, j, 2]
-    #         if skinCrCbHist[CR,CB] > 0:
-    #             skin[i,j] = 255
+    
+    
     dst = cv2.bitwise_and(frames,frames, mask=skin)
     element =cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
     dst = cv2.morphologyEx(dst, cv2.MORPH_OPEN, element)
@@ -115,18 +109,18 @@ if __name__ == "__main__":
 
     # try:
     while True:
-        # Wait for a coherent pair of frames: depth and color
         frames = pipeline.wait_for_frames() #获取摄像头的实时帧
         color_image,depth_image,depth_colormap = Align_version(frames,align,show_pic=0)
+        hand_image = hand_YCbCr_ellipse(color_image)        
 
-        hand_image = hand_YCbCr_ellipse(color_image)
-                
         # Stack both images horizontally 把两个图片水平拼在一起
         images = np.hstack((color_image, hand_image, depth_colormap))
 
+    
         cloud = object2point.objectToPoint(hand_image, depth_image)
-        object2point.talker(cloud)
-
+        cloud = np.array(cloud)
+        # cloud = object2point.pointlesser(cloud)
+        object2point.talker(cloud)        
 
         cv2.namedWindow(winname='RealSense',flags=cv2.WINDOW_AUTOSIZE) #设置视窗,flag为表示是否自动设置或调整窗口大小,WINDOW_AUTOSIZE即为自适应
         cv2.imshow('RealSense', images)

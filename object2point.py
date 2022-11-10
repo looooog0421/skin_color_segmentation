@@ -50,7 +50,7 @@ def objectToPoint(hand_image, depth_image):
         mask = np.zeros(hand_image.shape)
         cv.drawContours(mask, [contour], contourIdx=-1, color=255, thickness=-1)
         mask_list.append(copy.deepcopy(mask))
-    print(len(mask_list))
+    # print(len(mask_list))
     # 6.利用内参矩阵获取分割后的点云
     camera_matrix = np.array(
         [616.536445, 0.000000, 324.960123, 0.000000, 617.225309, 237.878774, 0.000000, 0.000000, 1.000000]).reshape(3,3)
@@ -91,7 +91,7 @@ def talker(points):
 
     pub = rospy.Publisher('object_topic', PointCloud2, queue_size=5)
     rospy.init_node('object_pointcloud_publisher_node', anonymous=True)
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(30)
     points = points / 1000
 
     # while not rospy.is_shutdown():
@@ -120,6 +120,12 @@ def talker(points):
     pub.publish(msg)
     print("published...")
     rate.sleep()
+
+def pointlesser(points):
+    lesspoints = points[0: -1: 10]
+
+    return lesspoints
+
 
 
 def transform(points):
