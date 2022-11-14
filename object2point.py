@@ -95,8 +95,9 @@ def talker(points, rate=30):
     pub = rospy.Publisher('object_topic', PointCloud2, queue_size=5)
     rospy.init_node('object_pointcloud_publisher_node', anonymous=True)
     rate = rospy.Rate(rate)
+    # points = np.array(points)
     points = points / 1000
-
+    # print(points.shape)
     # while not rospy.is_shutdown():
 
     msg = PointCloud2()
@@ -118,7 +119,7 @@ def talker(points, rate=30):
     msg.point_step = 12
     msg.row_step = msg.point_step * points.shape[0]
     msg.is_dense = False
-    msg.data = np.asarray(points, np.float32).tostring()
+    msg.data = np.asarray(points, dtype=np.float32).tostring()
 
     pub.publish(msg)
     print("published...")
@@ -129,7 +130,7 @@ def pointlesser(points,rate=30):
 
     return lesspoints
 
-def radius_outlier(cloudpoint,nb_points = 10,radius = 0.2):
+def radius_outlier(cloudpoint, nb_points = 10,radius = 0.2):
 
     cloud = o3d.geometry.PointCloud()
     cloud.points = o3d.utility.Vector3dVector(cloudpoint)

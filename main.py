@@ -43,10 +43,14 @@ while True:
     if cloud.shape[0] > 20:
         cloud = object2point.radius_outlier(cloud, 5, 5)
         if cloud.shape[0] > 1:
-            center1, radii1, rotation1 = Ellipsis.getMinVolEllipse(cloud)
-            print("center1=",center1,"radii=", radii1,"rotation=", rotation1)
-            ellipsoid = Ellipsis.getEllipsoidPoint(center1, radii1 ,rotation1)
-            object2point.talker(ellipsoid)      
+            points, flag = Ellipsis.getPoint(cloud)
+            # print(points.shape, flag)
+            object2point.talker(points)
+            # center1, radii1, rotation1 = Ellipsis.getMinVolEllipse(cloud)
+            # # print("center1=",center1,"radii=", radii1,"rotation=", rotation1)
+            # ellipsoid = Ellipsis.getEllipsoidPoint(center1, radii1 ,rotation1)
+            # object2point.talker(ellipsoid)
+
 
     # object2point.talker(cloud)  
 
